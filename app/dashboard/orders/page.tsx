@@ -5,8 +5,8 @@ import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "fi
 import { formatIDR } from "@/lib/utils";
 
 export default function OrderManagement() {
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]); // For the relational dropdown
+  const [orders, setOrders] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]); // For the relational dropdown
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Lock, User, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -37,14 +38,13 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1. Hardcoded fallback (temporary)
       if (username === "admin" && password === "dickypg") {
         localStorage.setItem("isLoggedIn", "true");
+        toast.success("Login Berhasil! Selamat datang admin.");
         router.push("/dashboard");
         return;
       }
 
-      // 2. Firestore check
       const q = query(
         collection(db, "admins"), 
         where("username", "==", username),
@@ -55,31 +55,27 @@ export default function LoginPage() {
       
       if (!querySnapshot.empty) {
         localStorage.setItem("isLoggedIn", "true");
+        toast.success("Login Berhasil! Selamat datang.");
         router.push("/dashboard");
       } else {
         setError("Username atau Password salah!");
+        toast.error("Login Gagal. Periksa kredensial Anda.");
       }
     } catch (err) {
       setError("Gagal menghubungi server.");
-      console.error(err);
+      toast.error("Kesalahan koneksi database.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-theme-bg p-4 transition-colors duration-500">
       <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-700">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-white rounded-2xl shadow-sm border border-slate-100 mb-2">
+          <div className="inline-flex p-3 bg-theme-card rounded-2xl shadow-sm border border-slate-100 mb-2">
             <ShieldCheck className="w-6 h-6 text-slate-900" />
           </div>
           <h1 className="text-lg font-bold text-slate-900 tracking-tight uppercase">
@@ -90,7 +86,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-sm border border-slate-100">
+        <div className="bg-theme-card p-8 sm:p-10 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Username</label>
@@ -131,7 +127,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.1em] hover:bg-slate-800 disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
+              className="w-full bg-theme-primary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.1em] hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
             >
               {submitting ? "Memproses..." : "Masuk Dashboard"}
             </button>

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, ChevronRight } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -37,38 +37,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Pengaturan Page", href: "/dashboard/settings", icon: Settings },
   ];
 
-  if (!authorized) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
-      <div className="text-slate-500 font-medium animate-pulse">Memverifikasi Sesi...</div>
-    </div>
-  );
+  if (!authorized) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
+    <div className="flex min-h-screen bg-slate-50 overflow-hidden font-helvetica">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-40 lg:hidden transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 w-72 bg-slate-900 text-white flex flex-col z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:block",
+        "fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 lg:static lg:block",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-8 flex items-center justify-between border-b border-slate-800">
+        <div className="h-20 flex items-center px-8 border-b border-slate-100">
           <div className="flex flex-col">
-            <span className="text-xl font-black tracking-tighter text-white uppercase">DPG SYSTEM</span>
-            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Admin Staff Only</span>
+            <span className="text-sm font-bold tracking-tight text-slate-900 uppercase">DPG SYSTEM</span>
+            <span className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">Staff Environment</span>
           </div>
-          <button className="lg:hidden text-slate-400" onClick={() => setIsSidebarOpen(false)}>
-            <X className="w-6 h-6" />
-          </button>
         </div>
 
-        <nav className="flex-1 p-6 space-y-2">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto mt-4">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -77,26 +70,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href} 
                 onClick={() => setIsSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 group font-medium",
+                  "flex items-center justify-between p-3 rounded-xl transition-all duration-200 group text-xs font-bold",
                   isActive 
-                    ? "bg-white text-slate-900 shadow-xl shadow-slate-950/20" 
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    ? "bg-slate-900 text-white shadow-lg shadow-slate-900/10" 
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                 )}
               >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-slate-900" : "text-slate-500 group-hover:text-slate-300")} />
-                {item.name}
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
+                  <span className="uppercase tracking-wider">{item.name}</span>
+                </div>
+                {isActive && <ChevronRight className="w-3 h-3 text-white/50" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-6 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-100">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full p-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-sm font-bold transition-all group"
+            className="flex items-center gap-3 w-full p-3 text-slate-400 hover:text-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
           >
-            <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            Logout Akun
+            <LogOut className="w-4 h-4" />
+            Keluar Akun
           </button>
         </div>
       </aside>
@@ -104,36 +100,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen relative max-w-full">
         {/* Header */}
-        <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b p-4 sm:p-6 flex justify-between items-center z-30 shadow-sm">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 sm:px-8 flex justify-between items-center z-30 sticky top-0">
           <div className="flex items-center gap-4">
             <button className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-lg" onClick={() => setIsSidebarOpen(true)}>
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
-            <div>
-              <h2 className="text-slate-900 font-bold hidden sm:block">Dashboard Panel</h2>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Laniakea Digital Environment</p>
+            <div className="hidden sm:block">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <span>Admin</span>
+                <span className="text-slate-200">/</span>
+                <span className="text-slate-900">{navItems.find(i => i.href === pathname)?.name || "Dashboard"}</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex flex-col items-end mr-2">
-              <span className="text-sm font-bold text-slate-700 leading-none">Dicky Putra Gorden</span>
-              <span className="text-[10px] font-black text-green-600 tracking-widest uppercase mt-1">ONLINE</span>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden xs:block">
+              <p className="text-[10px] font-bold text-slate-900 leading-none">Dicky Putra Gorden</p>
+              <p className="text-[9px] font-medium text-slate-400 mt-1 uppercase tracking-tighter">Authorized Staff</p>
             </div>
-            <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-bold border-2 border-slate-100 shadow-inner">
+            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-900 font-bold text-xs border border-slate-200">
               A
             </div>
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8 lg:p-10 max-w-[1600px] mx-auto w-full">
-          {children}
+        <main className="flex-1 p-6 sm:p-8 lg:p-10 w-full overflow-y-auto">
+          <div className="max-w-[1200px] mx-auto">
+            {children}
+          </div>
         </main>
 
-        <footer className="p-6 border-t bg-white flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-400 font-medium">© 2026 Dicky Putra Gorden // All Rights Reserved</p>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-            <span>LANIAKEA DIGITAL</span>
-            <ExternalLink className="w-3 h-3" />
+        <footer className="px-8 py-6 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">© 2026 Dicky Putra Gorden // Laniakea Digital</p>
+          <div className="text-[9px] font-black text-slate-200 tracking-widest uppercase">
+            Environment v1.0.4
           </div>
         </footer>
       </div>

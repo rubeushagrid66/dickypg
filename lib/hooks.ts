@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { db } from './firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 
 // Fetcher for Firestore collections
 const fetchCollection = async (key: string) => {
@@ -19,10 +19,18 @@ const fetchCollection = async (key: string) => {
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
+const fetchDoc = async (key: string) => {
+  const [col, id] = key.split(':');
+  const docRef = doc(db, col, id);
+  const snap = await getDoc(docRef);
+  return snap.exists() ? snap.data() : null;
+};
+
 export function useProducts() {
   return useSWR('products:active', fetchCollection, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
+    keepPreviousData: true,
   });
 }
 
@@ -30,16 +38,24 @@ export function useOrders() {
   return useSWR('orders:all', fetchCollection, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
+    keepPreviousData: true,
+  });
+}
+
+export function useSiteSettings() {
+  return useSWR('settings:siteConfig', fetchDoc, {
+    revalidateOnFocus: false,
+    dedupingInterval: 300000, // 5 minutes cache
   });
 }
 
 export function useSummary() {
-  const { data: products } = useProducts();
-  const { data: orders } = useOrders();
+  const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: orders, isLoading: ordersLoading } = useOrders();
 
-  const isLoading = !products || !orders;
+  const isLoading = productsLoading || ordersLoading;
 
-  if (isLoading) return { isLoading: true };
+  if (isLoading || !products || !orders) return { isLoading: true };
 
   const totalStock = (products as any[]).length;
   

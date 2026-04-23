@@ -5,8 +5,7 @@ import Link from "next/link";
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, ChevronRight } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { useSiteSettings } from "@/lib/hooks";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,48 +14,37 @@ function cn(...inputs: ClassValue[]) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [authorized, setAuthorized] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [siteTitle, setSiteTitle] = useState("DPG SYSTEM");
+  const { data: settings } = useSiteSettings();
   const router = useRouter();
   const pathname = usePathname();
+
+  const siteTitle = settings?.title || "DPG SYSTEM";
 
   useEffect(() => {
     const loginStatus = localStorage.getItem("isLoggedIn");
     if (loginStatus !== "true") {
-      router.push("/");
+      router.replace("/");
     } else {
       setAuthorized(true);
     }
-
-    const fetchSettings = async () => {
-      try {
-        const docRef = doc(db, "settings", "siteConfig");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setSiteTitle(docSnap.data().title || "DPG SYSTEM");
-        }
-      } catch (err) {
-        console.error("Failed to fetch settings:", err);
-      }
-    };
-    fetchSettings();
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
-    router.push("/");
+    router.replace("/");
   };
 
   const navItems = [
     { name: "Ringkasan", href: "/dashboard", icon: LayoutDashboard },
     { name: "Manajemen Stok", href: "/dashboard/products", icon: Package },
-    { name: "Manajemen Pesanan", href: "/dashboard/orders", icon: ShoppingCart },
+    { name: "Manajemen Pesanan", href: "/dashboard/orders", icon: ShoppingBagIcon },
     { name: "Pengaturan Page", href: "/dashboard/settings", icon: Settings },
   ];
 
   if (!authorized) return null;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden font-helvetica">
+    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -93,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
+                  <item.icon className="w-4 h-4" />
                   <span className="uppercase tracking-wider">{item.name}</span>
                 </div>
                 {isActive && <ChevronRight className="w-3 h-3 text-white/50" />}
@@ -154,5 +142,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </footer>
       </div>
     </div>
+  );
+}
+
+function ShoppingBagIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
   );
 }

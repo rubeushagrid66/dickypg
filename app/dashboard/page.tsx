@@ -1,10 +1,34 @@
-import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight } from "lucide-react";
+"use client";
+import { TrendingUp, Package, ShoppingCart, DollarSign, Plus } from "lucide-react";
+import { useSummary } from "@/lib/hooks";
+import { formatIDR } from "@/lib/utils";
+import Link from "next/link";
 
 export default function DashboardPage() {
+  const { totalStock, ordersToday, totalRevenue, isLoading } = useSummary();
+
   const stats = [
-    { name: "Total Stok", value: "1,234", icon: Package, color: "bg-slate-100 text-slate-900", trend: "+12%" },
-    { name: "Pesanan Hari Ini", value: "42", icon: ShoppingCart, color: "bg-slate-100 text-slate-900", trend: "+5 today" },
-    { name: "Total Pendapatan", value: "Rp 12.5M", icon: DollarSign, color: "bg-slate-100 text-slate-900", trend: "+25%" },
+    { 
+      name: "Total Stok", 
+      value: isLoading ? "..." : totalStock?.toLocaleString(), 
+      icon: Package, 
+      color: "bg-slate-100 text-slate-900", 
+      trend: "Live Data" 
+    },
+    { 
+      name: "Pesanan Hari Ini", 
+      value: isLoading ? "..." : ordersToday?.toLocaleString(), 
+      icon: ShoppingCart, 
+      color: "bg-slate-100 text-slate-900", 
+      trend: "Hari ini" 
+    },
+    { 
+      name: "Total Pendapatan", 
+      value: isLoading ? "..." : formatIDR(totalRevenue || 0), 
+      icon: DollarSign, 
+      color: "bg-slate-100 text-slate-900", 
+      trend: "Total" 
+    },
   ];
 
   return (
@@ -38,17 +62,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col justify-between min-h-[200px]">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Aktivitas Terkini</h3>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Akses Cepat</h3>
             <p className="text-slate-400 text-xs mt-2 font-medium leading-relaxed">Kelola data inventaris dan pesanan dengan cepat melalui pintasan di bawah.</p>
           </div>
           <div className="flex flex-wrap gap-3 mt-6">
-            <button className="flex items-center gap-2 px-5 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors">
-              <PlusIcon className="w-4 h-4" />
+            <Link 
+              href="/dashboard/orders/add"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
               Pesanan Baru
-            </button>
-            <button className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">
+            </Link>
+            <Link 
+              href="/dashboard/products/add"
+              className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
+            >
               Update Stok
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -60,25 +90,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function PlusIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }

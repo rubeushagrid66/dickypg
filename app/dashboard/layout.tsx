@@ -5,6 +5,8 @@ import Link from "next/link";
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, ChevronRight } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -13,6 +15,7 @@ function cn(...inputs: ClassValue[]) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [authorized, setAuthorized] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [siteTitle, setSiteTitle] = useState("DPG SYSTEM");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -23,6 +26,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else {
       setAuthorized(true);
     }
+
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, "settings", "siteConfig");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSiteTitle(docSnap.data().title || "DPG SYSTEM");
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      }
+    };
+    fetchSettings();
   }, [router]);
 
   const handleLogout = () => {
@@ -56,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}>
         <div className="h-20 flex items-center px-8 border-b border-slate-100">
           <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-tight text-slate-900 uppercase">DPG SYSTEM</span>
+            <span className="text-sm font-bold tracking-tight text-slate-900 uppercase truncate max-w-[180px]">{siteTitle}</span>
             <span className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">Staff Environment</span>
           </div>
         </div>
@@ -115,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden xs:block">
-              <p className="text-[10px] font-bold text-slate-900 leading-none">Dicky Putra Gorden</p>
+              <p className="text-[10px] font-bold text-slate-900 leading-none">{siteTitle}</p>
               <p className="text-[9px] font-medium text-slate-400 mt-1 uppercase tracking-tighter">Authorized Staff</p>
             </div>
             <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-900 font-bold text-xs border border-slate-200">
@@ -131,7 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
         <footer className="px-8 py-6 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">© 2026 Dicky Putra Gorden // Laniakea Digital</p>
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">© 2026 {siteTitle} // Laniakea Digital</p>
           <div className="text-[9px] font-black text-slate-200 tracking-widest uppercase">
             Environment v1.0.4
           </div>

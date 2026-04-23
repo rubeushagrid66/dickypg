@@ -8,21 +8,21 @@ import Link from "next/link";
 import { useProducts } from "@/lib/hooks";
 
 export default function ProductsPage() {
-  const { data: prods, error, mutate, isLoading } = useProducts();
+  const { data: prods, mutate, isLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleArchive = async (id: string) => {
     if (confirm("Arsip produk ini?")) {
-      // Optimistic update
-      mutate(prods?.filter(p => p.id !== id), false);
+      const currentProds = (prods as any[]) || [];
+      mutate(currentProds.filter(p => p.id !== id), false);
       await updateDoc(doc(db, "products", id), { isArchived: true });
-      mutate(); // Sync with server
+      mutate();
     }
   };
 
-  const filteredProds = prods?.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProds = (prods as any[])?.filter(p => 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   return (
@@ -76,7 +76,7 @@ export default function ProductsPage() {
               ) : filteredProds.length === 0 ? (
                 <tr><td colSpan={4} className="p-10 text-center text-xs font-bold text-slate-300 uppercase tracking-widest">Tidak ada data</td></tr>
               ) : (
-                filteredProds.map((p) => (
+                filteredProds.map((p: any) => (
                   <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-6">
                       <div className="flex items-center gap-4">

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Lock, User, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [title, setTitle] = useState("Dicky Putra Gorden");
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,13 +31,39 @@ export default function LoginPage() {
     fetchSettings();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "dickypg") {
-      localStorage.setItem("isLoggedIn", "true");
-      router.push("/dashboard");
-    } else {
-      setError("Username atau Password salah!");
+    setSubmitting(true);
+    setError("");
+
+    try {
+      // 1. Hardcoded fallback (temporary)
+      if (username === "admin" && password === "dickypg") {
+        localStorage.setItem("isLoggedIn", "true");
+        router.push("/dashboard");
+        return;
+      }
+
+      // 2. Firestore check
+      const q = query(
+        collection(db, "admins"), 
+        where("username", "==", username),
+        where("password", "==", password)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        localStorage.setItem("isLoggedIn", "true");
+        router.push("/dashboard");
+      } else {
+        setError("Username atau Password salah!");
+      }
+    } catch (err) {
+      setError("Gagal menghubungi server.");
+      console.error(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -103,9 +130,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.1em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
+              disabled={submitting}
+              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.1em] hover:bg-slate-800 disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
             >
-              Masuk Dashboard
+              {submitting ? "Memproses..." : "Masuk Dashboard"}
             </button>
           </form>
         </div>

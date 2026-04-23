@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useOrders } from "@/lib/hooks";
 
 export default function OrdersPage() {
-  const { data: orders, error, isLoading } = useOrders();
+  const { data: orders, isLoading } = useOrders();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredOrders = orders?.filter(o => 
-    o.buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredOrders = (orders as any[])?.filter(o => 
+    o.buyerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o.productSnapshot?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
@@ -65,7 +65,7 @@ export default function OrdersPage() {
               ) : filteredOrders.length === 0 ? (
                 <tr><td colSpan={4} className="p-10 text-center text-xs font-bold text-slate-300 uppercase tracking-widest">Belum ada data</td></tr>
               ) : (
-                filteredOrders.map((o) => (
+                filteredOrders.map((o: any) => (
                   <tr key={o.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-6">
                       <div className="flex flex-col gap-1">

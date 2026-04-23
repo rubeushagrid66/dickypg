@@ -1,39 +1,29 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc } from "firebase/firestore";
 import { formatIDR } from "@/lib/utils";
 import { Plus, Search, Archive, Package, MoreVertical } from "lucide-react";
 import Link from "next/link";
+import { useProducts } from "@/lib/hooks";
 
 export default function ProductsPage() {
-  const [prods, setProds] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: prods, error, mutate, isLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
-
-  const fetchProds = async () => {
-    try {
-      const q = query(collection(db, "products"), where("isArchived", "==", false));
-      const snap = await getDocs(q);
-      setProds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchProds(); }, []);
 
   const handleArchive = async (id: string) => {
     if (confirm("Arsip produk ini?")) {
+      // Optimistic update
+      mutate(prods?.filter(p => p.id !== id), false);
       await updateDoc(doc(db, "products", id), { isArchived: true });
-      fetchProds();
+      mutate(); // Sync with server
     }
   };
 
-  const filteredProds = prods.filter(p => 
+  const filteredProds = prods?.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -79,7 +69,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
+              {isLoading ? (
                 Array(3).fill(0).map((_, i) => (
                   <tr key={i}><td colSpan={4} className="p-6"><div className="h-10 bg-slate-50 rounded-xl animate-pulse"></div></td></tr>
                 ))

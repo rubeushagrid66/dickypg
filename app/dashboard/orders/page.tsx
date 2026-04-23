@@ -1,32 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { useState } from "react";
 import { formatIDR } from "@/lib/utils";
 import { Plus, Search, ShoppingBag, MoreVertical, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useOrders } from "@/lib/hooks";
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders, error, isLoading } = useOrders();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchOrders = async () => {
-    try {
-      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchOrders(); }, []);
-
-  const filteredOrders = orders.filter(o => 
+  const filteredOrders = orders?.filter(o => 
     o.buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o.productSnapshot?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -72,7 +58,7 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
+              {isLoading ? (
                 Array(3).fill(0).map((_, i) => (
                   <tr key={i}><td colSpan={4} className="p-6"><div className="h-10 bg-slate-50 rounded-xl animate-pulse"></div></td></tr>
                 ))

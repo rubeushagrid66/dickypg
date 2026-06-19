@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db, storage } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { ArrowLeft, Save, Upload, Package, Info } from "lucide-react";
+import { ArrowLeft, Save, Upload, Package, Info, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -12,8 +12,53 @@ import { useProducts } from "@/lib/hooks";
 export default function AddProductPage() {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const router = useRouter();
   const { mutate } = useProducts();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const snap = await getDocs(collection(db, "categories"));
+      const cats = snap.docs.map(d => ({ id: d.id, name: d.data().name as string }));
+      setCategories(cats);
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    const trimmed = newCategory.trim();
+    if (!trimmed) return;
+    if (categories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Kategori sudah ada.");
+      return;
+    }
+    try {
+      const docRef = await addDoc(collection(db, "categories"), { name: trimmed });
+      setCategories(prev => [...prev, { id: docRef.id, name: trimmed }]);
+      setNewCategory("");
+      setShowAddCategory(false);
+      toast.success(`Kategori "${trimmed}" ditambahkan.`);
+    } catch (err) {
+      toast.error("Gagal menambahkan kategori.");
+    }
+  };
+
+  const handleRemoveCategory = async (cat: { id: string; name: string }) => {
+    try {
+      await deleteDoc(doc(db, "categories", cat.id));
+      setCategories(prev => prev.filter(c => c.id !== cat.id));
+      toast.success(`Kategori "${cat.name}" dihapus.`);
+    } catch (err) {
+      toast.error("Gagal menghapus kategori.");
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,18 +121,78 @@ export default function AddProductPage() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Informasi Produk</label>
-              <input name="name" placeholder="Nama Produk" className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" required />
-              <div className="grid grid-cols-2 gap-4">
+              
+              {/* Nama Produk */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Nama Produk</label>
+                <input name="name" placeholder="Masukkan nama produk" className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" required />
+              </div>
+
+              {/* Kategori Produk */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Kategori Produk</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCategory(!showAddCategory)}
+                    className="text-[9px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1 transition-colors uppercase tracking-wider"
+                  >
+                    <Plus className="w-3 h-3" /> Tambah
+                  </button>
+                </div>
+
+                {showAddCategory && (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddCategory())}
+                      placeholder="Nama kategori baru"
+                      className="flex-1 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg outline-none font-bold text-xs focus:border-blue-400 transition-colors"
+                      autoFocus
+                    />
+                    <button type="button" onClick={handleAddCategory} className="px-3 py-2 bg-blue-500 text-white rounded-lg text-[10px] font-bold hover:bg-blue-600 transition-colors">
+                      Simpan
+                    </button>
+                    <button type="button" onClick={() => { setShowAddCategory(false); setNewCategory(""); }} className="px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-colors">
+                      Batal
+                    </button>
+                  </div>
+                )}
+
                 <select name="category" className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs appearance-none" required>
                   <option value="">Pilih Kategori</option>
-                  <option>Blackout</option>
-                  <option>Vitrase</option>
-                  <option>Roller Blind</option>
-                  <option>Aksesoris</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
-                <input name="unit" placeholder="Unit (Meter, Set)" className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" required />
+
+                {categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {categories.map((cat) => (
+                      <span key={cat.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold group">
+                        {cat.name}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(cat)}
+                          className="text-slate-300 hover:text-red-500 transition-colors"
+                          title={`Hapus ${cat.name}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Satuan */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Satuan</label>
+                <input name="unit" placeholder="Contoh: Meter, Set, Pcs" className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" required />
               </div>
             </div>
 
@@ -116,7 +221,7 @@ export default function AddProductPage() {
                 <div className="text-center p-6 space-y-2">
                   <Upload className="w-5 h-5 text-slate-300 mx-auto" />
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Klik untuk upload</p>
-                  <input name="image" type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" required />
+                  <input name="image" type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
               )}
             </div>

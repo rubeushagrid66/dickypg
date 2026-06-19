@@ -49,6 +49,19 @@ export function useSiteSettings() {
   });
 }
 
+export function useProjects() {
+  const fetcher = async () => {
+    const q = query(collection(db, 'projects'), orderBy('projectDate', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  };
+  return useSWR('projects:all', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+    keepPreviousData: true,
+  });
+}
+
 export function useSummary() {
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: orders, isLoading: ordersLoading } = useOrders();

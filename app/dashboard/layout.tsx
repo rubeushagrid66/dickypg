@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
-  Home, Instagram, CalendarDays, Package, Component, AlertTriangle, 
-  ClipboardList, ListTodo, CircleDollarSign, FileText, Settings, 
+  Home, Instagram, Package, FolderKanban, CircleDollarSign, Settings, 
   Headphones, Menu, X, Bell, ChevronDown, Camera, ChevronRight
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
@@ -20,6 +19,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { data: siteSettings } = useSiteSettings();
+
+  const siteTitle = siteSettings?.title || "Dicky Putra Gorden";
 
   useEffect(() => {
     const loginStatus = localStorage.getItem("isLoggedIn");
@@ -40,29 +42,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       title: "SOCIAL MEDIA",
       items: [
         { name: "Instagram Analytics", href: "/dashboard/instagram", icon: Instagram },
-        { name: "Content Calendar", href: "/dashboard/calendar", icon: CalendarDays },
       ]
     },
     {
       title: "INVENTORY",
       items: [
         { name: "Stock", href: "/dashboard/products", icon: Package },
-        { name: "Materials", href: "/dashboard/materials", icon: Component },
-        { name: "Low Stock Alert", href: "/dashboard/alerts", icon: AlertTriangle },
       ]
     },
     {
       title: "PRODUCTION",
       items: [
-        { name: "Ongoing Work", href: "/dashboard/ongoing", icon: ClipboardList },
-        { name: "Work Queue", href: "/dashboard/queue", icon: ListTodo },
+        { name: "Project", href: "/dashboard/projects", icon: FolderKanban },
       ]
     },
     {
       title: "FINANCE",
       items: [
         { name: "Revenue", href: "/dashboard/revenue", icon: CircleDollarSign },
-        { name: "Orders", href: "/dashboard/orders", icon: FileText },
       ]
     }
   ];
@@ -89,9 +86,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="bg-white/10 p-1.5 rounded-lg">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
             </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-lg font-bold tracking-tight uppercase">Curtain</span>
-              <span className="text-xs tracking-widest uppercase font-light text-slate-400">Studio</span>
+            <div className="leading-tight max-w-[140px]">
+              <span className="text-sm font-bold tracking-tight uppercase text-white">{siteTitle}</span>
             </div>
           </div>
         </div>
